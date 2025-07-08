@@ -1,0 +1,677 @@
+
+```{r}
+#| echo: false
+# 
+knitr::read_chunk(
+  'scripts/00-setup-packages.R'
+)
+knitr::read_chunk(
+  'scripts/01-data-design-grid.R'
+)
+knitr::read_chunk(
+  'scripts/02-read-data.R'
+)
+knitr::read_chunk(
+  'scripts/03-plot-descriptive.R'
+)
+knitr::read_chunk(
+  'scripts/04-frequentist-lang-indicator.R'
+)
+knitr::read_chunk(
+  'scripts/05-frequentist-lang-scoded.R'
+)
+knitr::read_chunk(
+  'scripts/06-frequentist-lang-indexed.R'
+)
+knitr::read_chunk(
+  'scripts/05-frequentist-interaction.R'
+)
+knitr::read_chunk(
+  'scripts/99-session-info.R'
+)
+
+
+```
+
+
+```{r basic-packages}
+#| message: false
+
+```
+
+```{r ggplot}
+#| message: false
+
+```
+
+```{r tables}
+#| message: false
+
+```
+
+# Introduction
+
+Linear regression can only be numerically applied to continuous predictors.
+Categorical predictors are, by definition, non-continuous and, thus, require a
+work-around for estimation.
+There are three main such work-arounds: treating categorical predictors as indicators
+or dummies, sum-coding them, or indexing the levels of categorical predictors.
+
+*Aim of the work.*
+
+Our examples and code will be based on R [@base].
+R is a programming language designed specifically for statistics and data
+analysis and, to date, it remains the most commonly used programming language to
+that end.
+Frequentist hierarchical regression models
+are implemented with `lme4` [REFS] package,
+and Bayesian hierarchical regression models
+with `brms` [REFS], an interface to the probabilistic
+programming language Stan [REFS]
+
+# Some basic terminology
+
+The explanation will pivot around three main concepts:
+*intercept*, *slope* and *level*.
+In this section, those concepts are defined to ensure that the exposition on the
+different treatments of categorical predictors can be followed.
+Finally, conditional and marginal means and weighted averages
+are introduced.
+
+The first two concepts, *intercept* and *slope*, are not, in fact, related to categorical variables,
+but to linear regression with continuous variables.
+
+- Intercept: the value of the response or dependent variable,
+when all (continuous) predictors are 0.
+For instance, suppose in an investigation of the accuracy (ACC)
+of L2 speakers in a given task
+as a function of the years spent learning the second language
+(ACC ~ years).
+The intercept would be the average accuracy
+at 0 years spent learning the L2.
+If the minimum years spent learning the L2 in the data set are subtracted from each value
+and regress accuracy on the minimum-centered years,
+the intercept would be the average accuracy
+at 0 minimum-centered years spent learning the L2,
+i.e. the average accuracy at the minimum age in the data set.
+
+- Slope: the change in the response variable for each 1-unit change in a
+continuous predictor.
+Retaking the previous example, the slope of years spent learning the L2
+would be the change in accuracy for a 1-year difference in years spent the L2,
+e.g. the difference in accuracy between having spent 2 or 3 years
+---or any two years 1 unit apart---
+learning the L2.
+
+*Levels* are exclusive of factors or categorical variables.
+
+- Level: Each of the distinct units of a factor or categorical variable.
+For example, if investigating between-language differences,
+*language* is a factor or categorical variable
+---a variable that can only take a fixed set of values---,
+and each language in the data set are levels, e.g. Basque or Finish.
+
+Finally, we introduce conditional, marginal and weighted means,
+since a clear understanding of thse concepts
+will make it easier to understand how
+the approaches to treating categorical predictors differ.
+However, these three concepts may be better explained through an example.
+
+Suppose there are only two languages in the world, A and B,
+and 30% of the world's population speaks language A,
+and 70% speak language B.
+Next, imagine that, on average,
+syllables have a duration of 200 milliseconds in language A,
+whilst in language B syllables have a mean duration of 300 milliseconds.
+The mean duration of syllables in language A and language B are
+their respective conditional means,
+200 and 300 ms.
+In other words, conditional means are
+the expected average outcome, given some value of another variable,
+in this case, given language A or language B.
+
+As indicated by the name,
+weighted means are combinations
+of conditional means, given some weights.
+For instance, if language A
+and language B were weighted equally ---technically, any weighting can be used,
+the syllables would have a weighted mean
+of $\frac{200 + 300}{2} = 200 \times 0.5 + 300 \times 0.5 =$ 250 ms.
+
+However, in this particular case,
+it is known that there are more speakers to language B
+than to language A.
+30% of the world's population is a speaker of language A,
+and the remaining 70% is a speaker of language B.
+Hence, the conditional means
+of the average syllable duration of language A and language B
+could be weighted
+by their probability distribution,
+and get the marginal mean duration of syllables in the world's languages.
+In this toy example, the marginal syllable duration
+would be $200 \times 0.3 + 300 \times 0.7 =$ `r 200 * .3 + 300 * .7` ms.
+Hence, a marginal mean is a particular kind of weighted mean of conditional means,
+where the weights come
+from the probability distribution
+of the variable that it is conditioned on.
+
+
+
+# The data: @salig2024 {#sec-data}
+
+It is often hard to reuse real data
+collected for scientific purposes
+because it requires a great familiarity
+with the research or even the discipline in hand.
+For instance, using measures used in phonetics
+may pose a burden on linguists that do not work
+in phonetics.
+
+An alternative approach would be to simulate
+the data.
+However, simulating the data requires
+a steady walk through the simulation code,
+Yet, the goal lays in illustrating
+how to fit models with categorical predictors,
+and we do not want to shift the focus of this work
+towards how to simulate (realistic) data (in R).
+
+Hence, the data in @salig2024 will be utilised.
+The data in @salig2024 is real data
+collected for scientific purposes
+within linguistics.
+Although understanding the exact goals,
+background and impact in the field of the study
+requires as much understanding as any other piece of research,
+the data can be simplified enough to be accessible
+to a wide range of readers within linguistics
+or, more broadly, the cognitive sciences.
+
+The data consist of reading times
+in milliseconds (ms) of sentences
+by English-Spanish bilinguals,
+whose dominant language is English overall.
+The data were collected from a classic
+2x2 *within-participant* design,
+where sentences could start either in
+English or in Spanish;
+then, the sentences remained
+in the language in which they started,
+or the language could be switch to the other one
+after some point.
+Thus,
+the reading time values come from
+one of the following four possibilities:
+
+```{r create-design-grid}
+#| echo: false
+
+```
+
+::: {.content-visible when-format="html"}
+```{r}
+#| label: tbl-design-grid-html
+#| tbl-cap-location: top
+#| tbl-cap: Design grid in @salig2024
+#| echo: false
+
+#___ tbl-design-grid-html
+design.tb %>% 
+  # create gt object
+  gt::gt(
+    # languages as rownames
+    rowname_col = 'language'
+  ) %>% 
+  gt::tab_stubhead(label = "Language") %>% # add theming
+  gtExtras::gt_theme_nytimes()
+
+```
+:::
+
+::: {.content-visible when-format="pdf" tbl-pos="h" layout-ncol="1"}
+```{r}
+#| label: tbl-design-grid-pdf
+#| tbl-cap-location: top
+#| tbl-cap: Design grid in @salig2024
+#| echo: false
+
+#___ tbl-design-grid-pdf
+design.tb %>% 
+  kbl(
+    , booktabs = T
+  ) %>% 
+  kable_styling(
+    full_width = F
+    , latex_options = 'striped'
+  )
+
+```
+:::
+
+
+```{r read-salig2024}
+
+```
+
+The data in @salig2024 are summarised in the following figure:
+
+```{r fig-descriptive-empirical}
+#| message: false
+#| echo: false
+#| fig-cap: "Summary of the empirical reading times (log-ms) in @salig2024, by experimental condition."
+#| fig-subcap: "Four elements summarise the information, the point and intervals, the densities, the grey shadows, and the jittered points. The point shows the median reading time, and the intervals contain 50%, 75% and 95% of obserservations. The densities are smoothed distributions of the data set. The gray shadows are observations; hence, the darker the shadow, the more observations there are in that area. Finally, the smaller jittered points indicate the mean of each participant for that condition."
+# out-width: 100%
+# out-height: 100%
+
+```
+
+In addition to the four conditions,
+namely English monolingual, English with code-switching,
+Spanish monolingual and Spanish with code-switching,
+the data have repeated measures for participant
+and sentence / experimental unit.
+
+With these data a number of
+frequentist generalised hierarchical regression models will be fitted.
+Firstly, we will illustrate
+the three main ways of treating categorical predictors,
+with a single categorical predictor.
+Then, a second categorical predictor will be incorporated
+to explain what *interaction*s mean in the context of categorical predictors.
+Finally, the same approaches will be applied to Bayesian regression models,
+since treatment given to categorical predictors impacts the parameters
+to be estimated directly from the model and, thus, the priors
+that have to be incorporated to the model.
+
+# Treatments of categorical predictors {#sec-treatments}
+
+```{r lme4}
+#| message: false
+```
+
+```{r helpers}
+#| message: false
+```
+
+
+In this section the three main ways of treating categorical
+predictors
+within linear regression will be presented,
+namely treating categorical predictors as indicators,
+sum-coding them,
+and treating them as indexes.
+To that end, the data in @salig2024 will be used,
+as described in @sec-data.
+Although the data have two relevant categorical predictors,
+language and code-switching,
+the three approaches will be first illustrated using language
+as the only categorical predictor.
+This will allow to focus in the differences between these approaches,
+before moving to combinations of (categorical) predictors.
+
+However, we highlight that three approaches lead to the same results
+---as shown in @sec-bayes, the treatment given to categorical predictors
+may slightly influence the exact results in Bayesian regression models---,
+and that the same information can be recovered
+regardless of the treatment given to the categorical predictor(s).
+Thus, the difference between treatments lays
+in how the results of the model are presented.
+Besides, in the published literature examples of all three treatments can be found.
+Hence, it is crucial to understand them and their differences to correctly
+interpret the results of studies.
+
+
+First, indicator treatment is discussed,
+and the terms *intercept*,
+*conditional mean*
+and *grand mean*
+---or, sometimes, *marginal mean*---
+are illustrated.
+Then how sum-coding works is explained,
+and finally indexing of categorical predictors is introduced.
+
+
+## Indicator treatment {#sec-treatments-indicator}
+
+When treated as indicators (also called *dummy variables* or *dummies*),
+a level of the categorical predictor is taken as the reference,
+and the remaining levels are expressed as differences from that reference.
+Indicator treatment is the default treatment of categorical predictors in
+R.
+If the categorical predictor is coded as an vector object of class *factor*,
+the reference level will be the first level specified in the factor.
+In turn, if there is no particular order specified,
+i.e. the categorical predictor is a vector of class *character*,
+the reference will be the level that comes first in alphabetical order.
+The reference level is labelled as *intercept* in the output of model,
+even if it is not the average value of the outcome,
+when all (continuous) predictors are 0
+---recall the definition of the term *intercept* above.
+
+### Fitting the model
+
+Since R treats the categorical predictors as indicators by default,
+just adding the categorical predictor to the model formula returns this treatment.
+`+ 1` can be added to the formula,
+between the tilde `~` and the first predictor,
+to explicitly indicate that the model should be fitted with an *intercept*.
+Hence, both formulas are equivalent.
+
+```{r lang-indicator}
+#| message: false
+
+```
+
+These are the population-level (or fixed) estimates
+of a model with a two-level categorical predictor
+treated as an indicator.
+
+```{r indicator-lang-coefs}
+#| message: false
+
+```
+
+The model returns two parameters,
+namely *`r indicator.lang.coef$term[1]`*
+and *`r indicator.lang.coef$term[2]`*,
+one per level of the categorical predictor added to the regression formula.
+Yet, the parameter *`r indicator.lang.coef$term[1]`*
+does not represent the average reading time
+when all predictors are 0.
+Since the sole categorical predictor added to the regression
+is categorical, it cannot be 0.
+It must be either *English* or *Spanish*.
+Hence, the intercept of a model
+fitted with categorical predictors as indicators
+represents the average response
+when all numeric predictor are 0,
+and the categorical predictor(s) are at their reference level(s).
+In other words,
+the *intercept* is the conditional mean
+of the reference level of the categorical predictor
+---when all numeric predictors are 0,
+i.e. it is the mean reaction time,
+conditional on being an *English* sentence
+---*English* comes before *Spanish* alphabetically---
+and every other predictor being equal to 0.
+Since there are no other predictors,
+it can be said that it is the conditional mean
+of *English* sentences.
+
+Then, *`r indicator.lang.coef$term[2]`*
+is the difference between the average
+reading time of the Spanish sentences
+and the intercept,
+the average reading time of the English sentences
+---when all numeric predictors are 0.
+In other words, *`r indicator.lang.coef$term[2]`*
+is the *pairwise comparison* between
+the levels of the categorical predictor *L*,
+when all numerical predictors are 0.
+In this case, there is no other predictor than *L*,
+but note that these pairwise comparisons need not be performed
+when the rest of the predictors are 0,
+and that the result of these comparisons
+might not be the same for different values
+of the rest of the categorical predictors.
+
+Although the output of models fitted with categorical predictors
+as indicators only returns the conditional mean of the
+reference level of the categorical predictor(s)
+---labelled as the `Intercept`---,
+the rest of the conditional means
+can be retrieved afterwards.
+
+...
+
+```{r lang-indicator-cmean-emm}
+#| message: false
+
+```
+
+```{r lang-indicator-cmean-marg}
+#| message: false
+
+```
+
+
+Finally, weighted averages can be calculated too.
+
+```{r lang-indicator-gmean-emm}
+#| message: false
+
+```
+
+```{r lang-indicator-gmean-marg}
+#| message: false
+
+```
+
+## Sum-coding treatment {#sec-treatments-sum}
+
+Next, we shall discuss sum-coding.
+Sum-coding consists of
+replacing the levels of the categorical predictor(s)
+with (equidistant) numeric values
+so that their sum equals to 1.
+For instance, with a 2-level categorical predictor,
+one level would be replaced with -.5, and the other with .5.
+Another common sum-coding scheme is -1/1, instead of -.5/.5.
+
+When sum-coded,
+the categorical predictors become computationally like any continuous predictor.
+Thus, unlike with indicator treatment,
+sum-coding returns an intercept estimate,
+and that estimate is a true intercept.
+The intercept of a model with sum-coded categorical predictors
+represents the mean response variable,
+when all predictors are 0,
+including the categorical predictor(s).
+This means that the intercept is
+the weighted mean between the levels of the categorical predictor,
+assuming all levels are equally distributed,
+i.e. it is the mean of the means
+of all the levels of the categorical predictor(s).
+If there are no numeric predictors to consider,
+the intercept of the model with sum-coded categorical
+predictors will be the marginal mean.
+
+The interpretation of the slope of the sum-coded predictor
+depends on the exact sum-coding scheme used.
+When using a -1/1 scheme,
+the slope represents the distance
+from each level to the grand mean (or sometimes the marginal mean)
+of the data set,
+and it answers to the question
+"Do the levels of the categorical predictor differ from the grand mean?".
+Half that estimate would be,
+if the categorical predictors has just 2 levels,
+the difference directly obtained from the
+model where the categorical predictor
+was treated as an indicator,
+i.e. the difference between the levels
+of the categorical predictors.
+The difference between levels is
+the meaning of the slope
+when the categorical predictor(s)
+are sum-coded following the -.5/.5 scheme.
+
+
+### Fitting the model
+
+```{r lang-scode}
+
+```
+
+```{r lang-scoded}
+
+```
+
+
+Alternatively, sum-coding can be set as the default treatment of all categorical
+predictors
+, although the only possible sum-coding scheme for categorical predictors with
+two levels is -1/1:
+
+```{r options-ctr-sum}
+#| echo: true
+#| eval: false
+#| code-fold: false
+
+```
+
+When the default treatment is set to sum-coding,
+the predictors provided to the regression are the original ones,
+and R handles the transformation to numeric values under the hood.
+For instance, we would run the following code to run the exact same regression as before;
+note that the name of the categorical predictor is exactly the same as in the indicator treatment,
+and not the 's_' variable that we created before.
+
+```{r}
+#| eval: false
+
+fit.lang.indicator <- lmer(
+  log(T) ~ L + (1 | S) + (1 | I)
+  , data = salig.df
+)
+
+# equivalent formula
+fit.lang.indicator <- lmer(
+  log(T) ~ 1 + L + (1 | S) + (1 | I)
+  , data = salig.df
+)
+```
+
+
+### Output of the model
+
+```{r lang-scoded-coefs}
+
+scoded.lang.coef.5
+scoded.lang.coef.1
+```
+
+### Conditional means
+
+```{r lang-scoded-cmeans-emm}
+
+```
+
+```{r lang-scoded-cmeans-marg}
+
+```
+
+
+## Indexing treatment {#sec-treatments-indexing}
+
+When indexing the categorical predictor
+the model estimates a conditional mean for each level of the predictor,
+and no contrast between them.
+Hence, the interpretation of the output of the model is straightforward,
+but the contrasts have to be computed afterwards.
+
+### Fitting the model
+
+```{r lang-index}
+
+```
+
+
+### Output of the model
+
+```{r index-lang-coefs}
+
+```
+
+### Difference between levels
+
+```{r lang-index-difference}
+
+```
+
+### Marginal mean
+
+```{r lang-index-gmean-emm}
+
+```
+
+```{r lang-index-gmean-marg}
+
+```
+
+
+
+# Interactions
+
+## Explanation of interaction with numeric predictors
+
+## Interaction between categorical and continuous predictors
+
+## Interaction between two (or more) categorical predictors
+
+# Pros and cons of each approach
+
+# Treatment of categorical predictors in Bayesian regression {#sec-bayes}
+
+The treatment of categorical predictors is not inherently different in Bayesian
+regression.
+Yet, one of the crucial differences between Bayesian and traditional,
+frequentist statistics is that the former incorporates prior information,
+knowledge or belief in the form of prior distributions of the parameters that
+will be estimated by the model.
+As we have shown before,
+all three treatments allow to recover the same pieces of information.
+However, the exact parameters estimated by the model change depending on the
+treatment given to categorical predictors.
+Hence, the treatment given to categorical predictors determines which prior
+distributions have to be supplied to the model.
+
+```{r brms}
+#| message: false
+
+```
+
+
+When treating categorical predictors as indicators,
+a prior for the *intercept*, i.e. the reference level, has to be provided,
+alongside priors for the differences for the rest of the intercepts.
+Besides, if there are interactions between multiple predictors,
+priors for those interactions are needed.
+This is problematic to some extent, since we are covertly assuming that
+the conditional means of the levels that are not the reference have a greater
+uncertainty than the reference level [@mcelreath2020, p.].
+
+
+
+# Conclusion
+
+# Session info
+
+```{r grateful}
+
+```
+
+
+```{r sessioninfo}
+
+```
+
+# Funding
+
+{{< meta funding >}}
+
+
+# References {.unnumbered}
+
+::: {#refs}
+:::
+
+
+# Appendix: Code used {.appendix .unnumbered}
+
+```{r ref.label=knitr::all_labels()}
+#| echo: true
+#| eval: false
+#| code-fold: false
+```
+

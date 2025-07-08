@@ -1,0 +1,45 @@
+
+
+# Fitting models with categorical predictors made simpler
+
+This work is part of my Ph.D. dissertation.
+
+The rendered document can be found
+[here](https://urrestarazu.gitlab.io/indexing-categorical-predictors/).
+
+# License
+
+<figure>
+<a href="https://creativecommons.org/licenses/by-nc/4.0/"><img
+src="https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg" /></a>
+<figcaption>License: CC BY-NC 4.0</figcaption>
+</figure>
+
+This means you are free to reuse the contents here, given proper
+attribution, as long as you don’t use it for commercial purpose.
+
+# Funding
+
+This work was possible thanks to the following:
+
+-   [MADPAB](https://egurtzegi.github.io/projects/madpab/) project
+    (French ANR call: ANR-AAPG2020)
+-   [MIND2WALL](https://anr.fr/Project-ANR-21-CE27-0005) project (French
+    ANR call: ANR-21-CE27-000)
+-   *Monumenta Linguae Vasconum VI* project (Spanish MINECO call:
+    PID2020-118445GB-I00)
+
+and all the taxpayers that allowed those research projects funding.
+
+There is also a number of institutions involved:
+
+-   French CNRS and IKER UMR5478 lab
+-   The University of the Basque Country (UPV/EHU)
+-   The University of Pau and the Countries of Adour (UPPA)
+
+Besides, this work relies heavily on Free and Open Source Software.
+Without being exhaustive, but to thank the most relevant ones:
+
+-   GitLab
+-   R
+-   Quarto

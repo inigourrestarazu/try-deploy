@@ -1,0 +1,56 @@
+name: Render and Deploy Quarto
+
+on:
+  push:
+    branches:
+      - main # Or your default branch
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+
+    container:
+      image: inigourrestarazu/r-bayes:latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install system dependencies (fonts etc.)
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq wget unzip fontconfig
+          wget -O gentium.zip "https://software.sil.org/downloads/r/gentium/GentiumPlus-6.200.zip"
+          unzip gentium.zip -d gentium
+          mkdir -p /usr/share/fonts/truetype/gentium
+          cp gentium/GentiumPlus-6.200/*.ttf /usr/share/fonts/truetype/gentium/
+          fc-cache -f -v
+
+      - name: Restore R environment with renv
+        run: |
+          R -e 'install.packages("renv"); renv::restore()'
+
+      - name: Install Quarto extensions
+        run: |
+          quarto install --no-prompt extension shafayetShafee/code-fullscreen
+          quarto install --no-prompt extension cl-roberts/code-appendix
+
+      - name: Render Quarto project
+        run: |
+          quarto render indexing-categorical-predictors.qmd --output-dir public
+
+      - name: Upload site artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: public
+
+  deploy:
+    needs: render
+    permissions:
+      pages: write
+      id-token: write
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v2

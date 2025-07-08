@@ -1,0 +1,70 @@
+title: 'How to fit models with categorical predictors'
+date: today
+author: 
+  - name: Inigo Urrestarazu-Porta
+    id: iup
+    orcid: 0000-0002-4606-3977
+    email: inigo.urrestarazu@ehu.eus
+    affiliation:
+      - name: CNRS -- IKER UMR5478
+        city: Bayonne
+        country: France
+        id: iker
+      - name: University of the Basque Country (UPV/EHU)
+        city: Gasteiz
+        id: ehu
+      - name: University of Pau and the Countries of Adour (UPPA)
+        city: Bayonne
+        id: uppa
+  # - name: Ander Egurtzegi
+  #   id: ander
+  #   orcid: 0000-0002-3451-323X
+  #   email: ander.egurtzegi@iker.cnrs.fr
+  #   affiliation:
+  #     - ref: iker
+abstract: |
+  Blablabla this is the abstract.
+  And this is more of the abstract
+abstract-title: Abstract
+keywords: 
+  - Categorical predictors
+  - Indexing
+  - Sum-coding
+  - Indicator
+  - Interaction
+  - Bayesian statistics
+funding: 
+  awards: 
+    - source: 'MADPAB (ANR call: )'
+    - source: 'MIND2WALL (ANR call: )'
+    - source: 'Monumenta (MINECO call: )'
+citation: true
+license: "CC BY-NC"
+tbl-cap-location: top
+fig-cap-location: bottom
+fig-align: center
+fig-format: png
+fig-asp: 1
+format:
+  html:
+    toc: true
+    code-fold: true
+    output-file: index.html
+  # typst:
+    # toc: true
+  pdf:
+    toc: true
+    lof: true
+    lot: true
+    number-sections: true
+    colorlinks: false
+    keep-tex: true
+    mainfont: Carlito
+    engine: xelatex
+bibliography:
+  - https://gitlab.com/urrestarazu/references/-/raw/main/references.bib
+  - https://gitlab.com/urrestarazu/references/-/raw/main/r-packages.bib
+filters:
+    - code-fullscreen
+execute: 
+  error: true

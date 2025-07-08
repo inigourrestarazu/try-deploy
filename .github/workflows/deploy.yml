@@ -25,6 +25,7 @@ jobs:
           mkdir -p /usr/share/fonts/truetype/gentium
           cp gentium/GentiumPlus-6.200/*.ttf /usr/share/fonts/truetype/gentium/
           fc-cache -f -v
+          quarto install tinytex
 
       - name: Restore R environment with renv
         run: |

@@ -39,7 +39,7 @@ jobs:
           quarto install --no-prompt extension shafayetShafee/code-fullscreen
           quarto install --no-prompt extension cl-roberts/code-appendix
       - name: Render and Publish
-        uses: quarto-dev/quarto-actions/publish@v2
+        run: quarto render indexing-categorical-predictors.qmd
         with:
           target: gh-pages
         env:

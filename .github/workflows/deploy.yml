@@ -3,7 +3,7 @@ name: Render and Deploy Quarto
 on:
   push:
     branches:
-      - main # Or your default branch
+      - main # or your default branch
 
 jobs:
   render:
@@ -14,7 +14,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install system dependencies (fonts etc.)
         run: |
@@ -35,22 +35,6 @@ jobs:
           quarto install --no-prompt extension shafayetShafee/code-fullscreen
           quarto install --no-prompt extension cl-roberts/code-appendix
 
-      - name: Render Quarto project
+      - name: Render Quarto
         run: |
-          quarto render indexing-categorical-predictors.qmd --output-dir public
-
-      - name: Upload site artifact
-        uses: actions/upload-pages-artifact@v1
-        with:
-          path: public
-
-  deploy:
-    needs: render
-    permissions:
-      pages: write
-      id-token: write
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v2
+          quarto render indexing-categorical-predictors.qmd --output-dir p

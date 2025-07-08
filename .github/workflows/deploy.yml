@@ -40,7 +40,6 @@ jobs:
           quarto install --no-prompt extension cl-roberts/code-appendix
       - name: Render and Publish
         run: quarto render indexing-categorical-predictors.qmd
-        with:
-          target: gh-pages
+        target: gh-pages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,6 +1,6 @@
-title: 'How to fit models with categorical predictors'
+title: "How to fit models with categorical predictors"
 date: today
-author: 
+author:
   - name: Inigo Urrestarazu-Porta
     id: iup
     orcid: 0000-0002-4606-3977
@@ -26,18 +26,18 @@ abstract: |
   Blablabla this is the abstract.
   And this is more of the abstract
 abstract-title: Abstract
-keywords: 
+keywords:
   - Categorical predictors
   - Indexing
   - Sum-coding
   - Indicator
   - Interaction
   - Bayesian statistics
-funding: 
-  awards: 
-    - source: 'MADPAB (ANR call: )'
-    - source: 'MIND2WALL (ANR call: )'
-    - source: 'Monumenta (MINECO call: )'
+funding:
+  awards:
+    - source: "MADPAB (ANR call: )"
+    - source: "MIND2WALL (ANR call: )"
+    - source: "Monumenta (MINECO call: )"
 citation: true
 license: "CC BY-NC"
 tbl-cap-location: top
@@ -49,9 +49,9 @@ format:
   html:
     toc: true
     code-fold: true
-    output-file: index.html
+    # output-file: index.html
   # typst:
-    # toc: true
+  # toc: true
   pdf:
     toc: true
     lof: true
@@ -65,6 +65,6 @@ bibliography:
   - https://gitlab.com/urrestarazu/references/-/raw/main/references.bib
   - https://gitlab.com/urrestarazu/references/-/raw/main/r-packages.bib
 filters:
-    - code-fullscreen
-execute: 
+  - code-fullscreen
+execute:
   error: true

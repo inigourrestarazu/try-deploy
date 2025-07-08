@@ -38,4 +38,4 @@ jobs:
 
       - name: Render Quarto
         run: |
-          quarto render indexing-categorical-predictors.qmd --output-dir p
+          quarto render indexing-categorical-predictors.qmd --output-dir public

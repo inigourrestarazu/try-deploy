@@ -41,7 +41,11 @@ jobs:
       - name: Render and Publish
         run: |
           quarto render indexing-categorical-predictors.qmd
-          quarto publish gh-pages --no-publish --no-prompt
-          mv indexing-categorical-predictors.html index.html
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Deploy to GitHub pages 🚀
+        if: github.event_name != 'pull_request'
+        uses: JamesIves/github-pages-deploy-action@v4.4.1
+        with:
+          clean: false
+          branch: gh-pages
+          folder: docs

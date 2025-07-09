@@ -41,6 +41,7 @@ jobs:
       - name: Render and Publish
         run: |
           quarto render indexing-categorical-predictors.qmd
-          quarto publish gh-pages --no-prompt
+          quarto publish gh-pages --no-publish --no-prompt
+          mv indexing-categorical-predictors.html index.html
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
